@@ -15,6 +15,8 @@ const CreateTodo = ({ setTodos }) => {
   const handleChange = (e) => {
     setTodo(e.target.value);
   };
+
+  
   return (
     <div className="flex flex-col h-full items-center justify-evenly">
       <div className="text-2xl font-bold">Create Todo</div>

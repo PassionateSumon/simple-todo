@@ -28,6 +28,8 @@ const ShowTodos = ({ todos, setTodos }) => {
   const handleTodoDelete = (index) => {
     setTodos((prev) => prev.filter((_, ind) => ind !== index));
   };
+
+  
   return (
     <div className="flex flex-col items-center h-full overflow-y-auto">
       {todos?.map((todo, ind) => (
