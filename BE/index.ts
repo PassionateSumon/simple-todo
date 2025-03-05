@@ -193,13 +193,42 @@ async function main() {
           data: {
             title,
             description,
-            isDone
+            isDone,
           },
         });
 
         return res.status(200).json(updatedTodo);
       } catch (error) {
         return res.status(500).json("Internal server error to edit!!");
+      }
+    }
+  );
+
+  app.delete(
+    "/delete-todo/:t_id",
+    authMiddleware,
+    async (req: extendRequest, res: Response): Promise<any> => {
+      try {
+        const { t_id } = req.params;
+        if (!t_id) {
+          return res.status(400).json("Todo id is required!");
+        }
+        const findTodo = await prisma.todo.findUnique({
+          where: {
+            id: t_id,
+          },
+        });
+        if (!findTodo) {
+          return res.status(400).json("No todo found!");
+        }
+        await prisma.todo.delete({
+          where: {
+            id: t_id,
+          },
+        });
+        return res.status(200).json("Successfully deleted!");
+      } catch (error) {
+        return res.status(500).json("Internal server error to delete!!");
       }
     }
   );
