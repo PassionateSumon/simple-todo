@@ -13,6 +13,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(
   cors({
+    origin: "http://localhost:5173",
     credentials: true,
   })
 );
@@ -24,11 +25,11 @@ interface extendRequest extends Request {
 const authMiddleware = async (
   req: extendRequest,
   res: Response,
-  next: () => void
+  next: (err?: any) => void
 ): Promise<any> => {
   try {
     // const token = req.headers.authorization as string;
-    const token = req.cookies.token;
+    const token = req?.cookies?.token;
     if (!token) {
       return res.status(401).json("Unauthorized!");
     }
@@ -112,6 +113,7 @@ async function main() {
         .status(200)
         .cookie("token", token, {
           httpOnly: true,
+          path: "/",
         })
         .json({ message: "Login Successfully.", token });
     } catch (error) {
@@ -232,6 +234,67 @@ async function main() {
       }
     }
   );
+
+  app.get(
+    "/get-profile",
+    authMiddleware,
+    async (req: extendRequest, res: Response): Promise<any> => {
+      try {
+        const id = req?.userId;
+        console.log(id);
+        const userProfile = await prisma.profile.findUnique({
+          where: {
+            userId: id,
+          },
+        });
+
+        if (!userProfile) {
+          return res.status(400).json("No profile found!");
+        }
+        return res.status(200).json(userProfile);
+      } catch (error) {
+        return res.status(500).json("Internal server error to get profile!!");
+      }
+    }
+  );
+
+  app.get(
+    "/me",
+    authMiddleware,
+    async (req: extendRequest, res: Response): Promise<any> => {
+      try {
+        const user = await prisma.user.findUnique({
+          where: {
+            id: req?.userId,
+          },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        });
+        if (!user) {
+          return res.status(400).json({ message: "User not found!" });
+        }
+        return res.status(200).json(user);
+      } catch (error) {
+        return res
+          .status(500)
+          .json({ message: "Internal server error at Me!" });
+      }
+    }
+  );
+
+  app.post("/logout", authMiddleware, (req: extendRequest, res: Response) => {
+    try {
+      res
+        .clearCookie("token", { httpOnly: true })
+        .status(200)
+        .json({ message: "logout successfully!" });
+    } catch (error) {
+      res.status(500).json({message: "Internal server error at logout!"});
+    }
+  });
 }
 
 main().catch((e) => console.error(e));
